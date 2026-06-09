@@ -1,0 +1,22 @@
+[package]
+name = "warrant-cli"
+description = "CLI for the warrant close-claim toolkit"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "warrant"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+warrant-core = { path = "../warrant-core" }
+clap = { version = "4", features = ["derive"] }
+serde_json = "1"
+sigpipe = "0.1"
