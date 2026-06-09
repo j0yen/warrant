@@ -34,15 +34,15 @@ pub struct FakeSource {
 impl FakeSource {
     /// Create a new `FakeSource` with the given notes.
     #[must_use]
-    pub fn new(notes: Vec<RawClose>) -> Self {
+    pub const fn new(notes: Vec<RawClose>) -> Self {
         Self { notes }
     }
 
     /// Create a `FakeSource` with the built-in illustrative fixtures.
     ///
     /// Includes verbatim excerpts of:
-    /// - `PRD-ctrace-session-end-resilient.md` (MechanismAsserted)
-    /// - `PRD-agentns-wrap.md` (Superseded / MechanismAsserted)
+    /// - `PRD-ctrace-session-end-resilient.md` (`MechanismAsserted`)
+    /// - `PRD-agentns-wrap.md` (Superseded / `MechanismAsserted`)
     #[must_use]
     pub fn with_illustrative_fixtures() -> Self {
         use std::path::PathBuf;

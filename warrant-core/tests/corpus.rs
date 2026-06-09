@@ -3,6 +3,9 @@
 //! This file must appear in `cargo test` output as `Running tests/corpus.rs`
 //! (see `self_orphaned_mock_tests` memory — no orphaned mock subdir).
 
+// Tests legitimately use expect/panic/indexing — allow them here.
+#![allow(clippy::expect_used, clippy::panic, clippy::no_effect_underscore_binding)]
+
 use std::path::PathBuf;
 
 use warrant_core::{
@@ -11,10 +14,11 @@ use warrant_core::{
 
 // ── AC2: classify is pure — zero CloseSource calls inside classify ──────────
 
-/// CloseSource that panics if `close_notes` is ever called.
+/// `CloseSource` that panics if `close_notes` is ever called.
 struct PanicSource;
 
 impl CloseSource for PanicSource {
+    #[allow(clippy::panic)]
     fn close_notes(&self) -> Result<Vec<RawClose>, Box<dyn std::error::Error>> {
         panic!("classify must not call CloseSource::close_notes — it is pure");
     }
@@ -24,7 +28,8 @@ impl CloseSource for PanicSource {
 fn classify_is_pure_no_source_calls() {
     // The caller calls close_notes; classify receives a plain &[RawClose].
     // This test verifies that classify itself never touches a CloseSource.
-    let _panic_source = PanicSource; // exists but is never passed to classify
+    // We construct a PanicSource but never pass it to classify.
+    let _phantom: Option<PanicSource> = None;  // ensures PanicSource is constructed in type system
     let notes: Vec<RawClose> = vec![RawClose {
         reference: CloseRef::Prd(PathBuf::from("test/example.md")),
         text: "Status: Closed (2026-01-01)\n\nAll ACs verified.\n".to_string(),
@@ -32,7 +37,8 @@ fn classify_is_pure_no_source_calls() {
     // classify takes &[RawClose] — no source argument — so PanicSource cannot be called
     let plan = classify(&notes);
     assert_eq!(plan.claims.len(), 1);
-    assert_eq!(plan.claims[0].kind, ClaimKind::AcsMet);
+    let claim = plan.claims.first().expect("one claim must be present");
+    assert_eq!(claim.kind, ClaimKind::AcsMet);
 }
 
 // ── AC3: fixture classification — session-end-resilient + agentns-wrap ──────
@@ -55,7 +61,7 @@ fn session_end_resilient_classified_as_mechanism_asserted() {
 
     let plan = classify(std::slice::from_ref(&note));
     assert_eq!(plan.claims.len(), 1);
-    let claim = &plan.claims[0];
+    let claim = plan.claims.first().expect("one claim must be present");
     assert_eq!(
         claim.kind,
         ClaimKind::MechanismAsserted,
@@ -90,7 +96,7 @@ fn agentns_wrap_classified_as_superseded() {
 
     let plan = classify(std::slice::from_ref(&note));
     assert_eq!(plan.claims.len(), 1);
-    let claim = &plan.claims[0];
+    let claim = plan.claims.first().expect("one claim must be present");
     assert_eq!(
         claim.kind,
         ClaimKind::Superseded,
@@ -102,6 +108,7 @@ fn agentns_wrap_classified_as_superseded() {
 // ── AC4: AuditPlan is serde-serializable and has stable shape ───────────────
 
 #[test]
+#[allow(clippy::expect_used)]
 fn audit_plan_serializes_to_json_with_expected_fields() {
     let source = FakeSource::with_illustrative_fixtures();
     let notes = source
@@ -148,14 +155,16 @@ fn tally_total_sums_all_kinds() {
 // ── CloseDate extraction ─────────────────────────────────────────────────────
 
 #[test]
+#[allow(clippy::expect_used)]
 fn close_date_is_extracted() {
     let note = RawClose {
         reference: CloseRef::Prd(PathBuf::from("test/dated.md")),
         text: "Status: Closed (2026-03-15)\n\nAll ACs met.\n".to_string(),
     };
     let plan = classify(std::slice::from_ref(&note));
+    let claim = plan.claims.first().expect("one claim must be present");
     assert_eq!(
-        plan.claims[0].close_date.as_deref(),
+        claim.close_date.as_deref(),
         Some("2026-03-15"),
         "close_date must be extracted from the Status line"
     );
@@ -164,25 +173,29 @@ fn close_date_is_extracted() {
 // ── LiveDeferred classification ──────────────────────────────────────────────
 
 #[test]
+#[allow(clippy::expect_used)]
 fn live_deferred_classification() {
     let note = RawClose {
         reference: CloseRef::Prd(PathBuf::from("test/deferred.md")),
         text: "Status: Closed (2026-04-01)\n\ndeferred_acs: [3,4]\n\nPartial close.\n".to_string(),
     };
     let plan = classify(std::slice::from_ref(&note));
-    assert_eq!(plan.claims[0].kind, ClaimKind::LiveDeferred);
+    let claim = plan.claims.first().expect("one claim must be present");
+    assert_eq!(claim.kind, ClaimKind::LiveDeferred);
     assert_eq!(plan.tally.live_deferred, 1);
 }
 
 // ── Unclassified when no status line ────────────────────────────────────────
 
 #[test]
+#[allow(clippy::expect_used)]
 fn unclassified_when_no_status_line() {
     let note = RawClose {
         reference: CloseRef::Prd(PathBuf::from("test/noheader.md")),
         text: "Some random prose with no status line at all.\n".to_string(),
     };
     let plan = classify(std::slice::from_ref(&note));
-    assert_eq!(plan.claims[0].kind, ClaimKind::Unclassified);
+    let claim = plan.claims.first().expect("one claim must be present");
+    assert_eq!(claim.kind, ClaimKind::Unclassified);
     assert_eq!(plan.tally.unclassified, 1);
 }

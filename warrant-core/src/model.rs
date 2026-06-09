@@ -86,7 +86,7 @@ pub struct ClaimKindTally {
 impl ClaimKindTally {
     /// Total number of claims across all kinds.
     #[must_use]
-    pub fn total(&self) -> usize {
+    pub const fn total(&self) -> usize {
         self.acs_met
             + self.mechanism_asserted
             + self.superseded

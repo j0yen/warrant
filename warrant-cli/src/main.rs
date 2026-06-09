@@ -43,7 +43,7 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = Format::Table)]
         format: Format,
     },
-    /// List available CloseSource implementations.
+    /// List available `CloseSource` implementations.
     ListSources,
 }
 
@@ -99,13 +99,14 @@ fn run() -> Result<ExitCode, Box<dyn std::error::Error>> {
 
             match format {
                 Format::Table => {
-                    print_table(&plan)
-                        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+                    print_table(&plan)?;
                 }
                 Format::Json => {
-                    let json = serde_json::to_string_pretty(&plan)?;
-                    // JSON mode: print to stdout
-                    println!("{json}");
+                    #[allow(clippy::print_stdout)]
+                    {
+                        let json = serde_json::to_string_pretty(&plan)?;
+                        println!("{json}");
+                    }
                 }
             }
         }
@@ -113,7 +114,7 @@ fn run() -> Result<ExitCode, Box<dyn std::error::Error>> {
             // Only FakeSource is available in v0.1; real sources arrive in warrant-audit
             let stdout = io::stdout();
             let mut out = stdout.lock();
-            writeln!(out, "Available CloseSource implementations:")?;
+            writeln!(out, "Available `CloseSource` implementations:")?;
             writeln!(out, "  FakeSource  (in-memory illustrative fixtures, v0.1)")?;
             writeln!(out, "  [Real filesystem source ships in warrant-audit]")?;
         }
@@ -124,6 +125,7 @@ fn run() -> Result<ExitCode, Box<dyn std::error::Error>> {
 
 fn main() -> ExitCode {
     sigpipe::reset();
+    #[allow(clippy::print_stderr)]
     match run() {
         Ok(code) => code,
         Err(e) => {
