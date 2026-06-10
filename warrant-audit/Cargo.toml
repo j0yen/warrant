@@ -1,0 +1,21 @@
+[package]
+name = "warrant-audit"
+description = "Live source, warrants.toml registry, and assertion runner for the warrant toolkit"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+warrant-core = { path = "../warrant-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+[dev-dependencies]
+tempfile = "3"

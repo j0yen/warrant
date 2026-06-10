@@ -8,12 +8,16 @@
 //! - [`AuditPlan`] — the pure result of classifying a corpus
 //! - [`Warrant`] / [`AssertionSpec`] / [`WarrantVerdict`] — assertion types
 //! - [`classify`] — the pure, IO-free classifier function
+//! - [`DocketSink`] / [`FakeDocketSink`] / [`PrintDocketSink`] — docket reporting
+//! - [`ReportedState`] — edge-trigger persisted state
 
 pub mod classifier;
+pub mod docket;
 pub mod model;
 pub mod source;
 
 pub use classifier::classify;
+pub use docket::{default_state_path, DocketSink, FakeDocketSink, PrintDocketSink, ReportedState};
 pub use model::{
     AssertionSpec, AuditPlan, ClaimKind, ClaimKindTally, CloseClaim, CloseRef, Warrant,
     WarrantStatus, WarrantVerdict,

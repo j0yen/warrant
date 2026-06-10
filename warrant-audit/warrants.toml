@@ -1,0 +1,28 @@
+# warrants.toml — registry of close-claim assertions for the warrant toolkit
+#
+# Each [[warrant]] entry maps a close source (by basename) to a side-effect-free
+# assertion that proves or refutes the claimed mechanism.
+#
+# Assertion types:
+#   type = "command_exit"     — run a shell command, check exit code
+#   type = "file_exists"      — check that a file exists
+#   type = "grep_absent"      — check that a pattern is ABSENT in a file
+#   type = "counter_nonzero"  — check that a counter key is non-zero in a file
+#
+# CommandExit commands must be read-only (no --apply, rm, >, write, etc.)
+
+[[warrant]]
+source = "PRD-ctrace-session-end-resilient.md"
+
+# The close claims: "ctrace-orphan-reap backfills summaries on a schedule
+# via render_log step". This is REFUTED if the session-end hook still uses
+# summarize-ctrace-session.sh (not scribe) AND the reaper only handles
+# orphaned-tracer verdicts (never runs render_log for closed sessions).
+#
+# We check that the session-end hook does NOT contain "scribe" — i.e. the
+# claimed new mechanism (scribe) is absent, meaning the old path persists.
+# grep returning exit 0 means pattern IS present; we want it absent (exit 1).
+[warrant.assertion]
+type = "grep_absent"
+path = "/home/jsy/.claude/scripts/ctrace-session-end.sh"
+pattern = "scribe"
